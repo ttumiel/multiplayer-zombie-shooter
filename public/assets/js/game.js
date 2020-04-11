@@ -68,6 +68,16 @@ class WorldScene extends Phaser.Scene {
         }
       }.bind(this));
     }.bind(this));
+
+    this.socket.on('playerMoved', (playerInfo) => {
+      this.otherPlayers.getChildren().forEach((player) => {
+        if (playerInfo.playerId === player.playerId) {
+          player.x=playerInfo.x;
+          player.y=playerInfo.y;
+          player.flipX = playerInfo.flipX;
+        }
+      });
+    });
   }
 
   createMap() {
@@ -235,6 +245,12 @@ class WorldScene extends Phaser.Scene {
       } else {
         this.player.anims.stop();
       }
+
+      this.socket.emit('playerMovement', {
+        x: this.container.x,
+        y: this.container.y,
+        flipX: this.player.flipX
+      });
     }
   }
 }
