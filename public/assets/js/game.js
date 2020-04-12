@@ -118,6 +118,13 @@ class BootScene extends Phaser.Scene {
       frameWidth: 16,
       frameHeight: 16
     });
+    // Load zombie
+    this.load.spritesheet(`enemy`, `assets/images/zombie_move.png`, {
+      frameWidth: 288,
+      frameHeight: 311
+    });
+    // Bullet image
+    this.load.image(`bullet`, `assets/images/bullet.png`);
   }
 
   create() {
