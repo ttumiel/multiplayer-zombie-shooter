@@ -39,7 +39,7 @@ class Zombies extends Phaser.Physics.Arcade.Group {
     this.getChildren().forEach(enemy => {
       if (enemy.active) {
         // enemy moves to the player
-        enemy.anims.play('walk', true);
+        enemy.anims.play('zombiewalk', true);
         // enemy rotates to the player
         enemy.rotation = this.scene.physics.moveToObject(enemy, player);
       }
@@ -60,8 +60,7 @@ class Zombies extends Phaser.Physics.Arcade.Group {
     .setActive(true)
     .setVisible(true)
     .setScale(0.1,0.1)
-    // .setTint(Phaser.Display.Color.RandomRGB().color)
-    .play('walk');
+    .play('zombiewalk');
 
     // reset enemies on x and y from pos array
     // if the score is less than needed reset enemy at position with 1 health
@@ -238,6 +237,16 @@ class WorldScene extends Phaser.Scene {
       key: 'down',
       frames: this.anims.generateFrameNumbers('player', {
         frames: [3, 9, 3, 15]
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'zombiewalk',
+      frames: this.anims.generateFrameNumbers('enemy', {
+        start: 0,
+        end: 17
       }),
       frameRate: 10,
       repeat: -1
