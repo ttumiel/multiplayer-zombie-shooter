@@ -305,28 +305,41 @@ class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.enemies, this.obstacles);
   }
 
-  onMeetEnemy(player, zone) {
-    // we move the zone to some other location
-    zone.x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
-    zone.y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
-  }
+  shoot(x, y, direction){
+    let bullet = this.bullets.get(x,y);
+    if (!bullet) return;
 
-  getValidLocation() {
-    var validLocation = false;
-    var x, y;
-    while (!validLocation) {
-      x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
-      y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
+    bullet
+    .setActive(true)
+    .setVisible(true)
+    .setScale(0.5,0.5);
 
-      var occupied = false;
-      this.obstacles.getChildren().forEach((child) => {
-        if (child.getBounds().contains(x, y)) {
-          occupied = true;
-        }
-      });
-      if (!occupied) validLocation = true;
+    switch(direction){
+      case 0:
+        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, 0, this.bulletSpeed);
+      break
+      case 1:
+        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, 0, this.bulletSpeed);
+      break
+      case 2:
+        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height/2, this.bulletSpeed);
+      break
+      case 3:
+        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height, this.bulletSpeed);
+      break
+      case 4:
+        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, this.physics.world.bounds.height, this.bulletSpeed);
+      break
+      case 5:
+        bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height, this.bulletSpeed);
+      break
+      case 6:
+        bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height/2, this.bulletSpeed);
+      break
+      case 7:
+        bullet.rotation = this.physics.moveTo(bullet, 0, 0, this.bulletSpeed);
+      break
     }
-    return { x, y };
   }
 
   update() {
@@ -335,36 +348,80 @@ class WorldScene extends Phaser.Scene {
       this.bullets.outOfBounds();
 
       this.container.body.setVelocity(0);
-
-      // Horizontal movement
-      if (this.cursors.left.isDown) {
-        this.container.body.setVelocityX(-80);
-      } else if (this.cursors.right.isDown) {
-        this.container.body.setVelocityX(80);
-      }
-
-      // Vertical movement
-      if (this.cursors.up.isDown) {
-        this.container.body.setVelocityY(-80);
-      } else if (this.cursors.down.isDown) {
-        this.container.body.setVelocityY(80);
-      }
-
-      // Update the animation last and give left/right animations precedence over up/down animations
-      if (this.cursors.left.isDown) {
+      if(this.wasd.left.isDown){
         this.player.anims.play('left', true);
         this.player.flipX = true;
-      } else if (this.cursors.right.isDown) {
+        if(this.wasd.up.isDown){
+          this.container.body.setVelocityX(-this.speed);
+          this.container.body.setVelocityY(-this.speed);
+        }else if(this.wasd.down.isDown){
+          this.container.body.setVelocityX(-this.speed);
+          this.container.body.setVelocityY(this.speed);
+        }else{
+          this.container.body.setVelocityX(-this.speed);
+        }
+      }else if(this.wasd.right.isDown){
         this.player.anims.play('right', true);
         this.player.flipX = false;
-      } else if (this.cursors.up.isDown) {
+        if(this.wasd.up.isDown){
+          this.container.body.setVelocityX(this.speed);
+          this.container.body.setVelocityY(-this.speed);
+        }else if(this.wasd.down.isDown){
+          this.container.body.setVelocityX(this.speed);
+          this.container.body.setVelocityY(this.speed);
+        }else{
+          this.container.body.setVelocityX(this.speed);
+        }
+      }else{
+        if(this.wasd.up.isDown){
         this.player.anims.play('up', true);
-      } else if (this.cursors.down.isDown) {
+          this.container.body.setVelocityY(-this.speed);
+        }else if(this.wasd.down.isDown){
         this.player.anims.play('down', true);
-      } else {
+          this.container.body.setVelocityY(this.speed);
+        }else{
         this.player.anims.stop();
       }
+      }
 
+      if(this.cursors.left.isDown){
+        if(this.cursors.up.isDown){
+          let bulletDir = 7;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else if(this.cursors.down.isDown){
+          let bulletDir = 5;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else{
+          let bulletDir = 6;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }
+      }else if(this.cursors.right.isDown){
+        if(this.cursors.up.isDown){
+          let bulletDir = 1;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else if(this.cursors.down.isDown){
+          let bulletDir = 3;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else{
+          let bulletDir = 2;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }
+      }else{
+        if(this.cursors.up.isDown){
+          let bulletDir = 0;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else if(this.cursors.down.isDown){
+          let bulletDir = 4;
+          this.shoot(this.container.x, this.container.y, bulletDir);
+        }else{
+        }
+      }
+
+
+      if (this.wasd.left.isDown  ||
+          this.wasd.right.isDown ||
+          this.wasd.up.isDown    ||
+          this.wasd.down.isDown){
       this.socket.emit('playerMovement', {
         x: this.container.x,
         y: this.container.y,
@@ -372,6 +429,7 @@ class WorldScene extends Phaser.Scene {
       });
     }
   }
+}
 }
 
 var config = {
