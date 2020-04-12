@@ -23,6 +23,84 @@ class Bullets extends Phaser.Physics.Arcade.Group {
     }))
   }
 }
+class Zombies extends Phaser.Physics.Arcade.Group {
+  constructor(scene, enemyCount) {
+    super(scene.physics.world, scene, {
+      maxSize: enemyCount,
+      defaultKey: `enemy`,
+      immovable: true,
+      setScale: {
+        x: 0.1, y: 0.1
+      }
+      });
+  }
+
+  enemyFollow(player) {
+    this.getChildren().forEach(enemy => {
+      if (enemy.active) {
+        // enemy moves to the player
+        enemy.anims.play('walk', true);
+        // enemy rotates to the player
+        enemy.rotation = this.scene.physics.moveToObject(enemy, player);
+      }
+    });
+  }
+
+  enemySpawn(numEnemies) {
+    // if (this.nextEnemyAt > this.game.time.now) return;
+    // if (this.countDead() === 0) return;
+
+    const [x,y] = this.getPosition();
+    const enemy = this.get(x, y);
+    if (!enemy) return;
+
+    // console.log(enemy)
+
+    enemy
+    .setActive(true)
+    .setVisible(true)
+    .setScale(0.1,0.1)
+    // .setTint(Phaser.Display.Color.RandomRGB().color)
+    .play('walk');
+
+    // reset enemies on x and y from pos array
+    // if the score is less than needed reset enemy at position with 1 health
+    // if (score <= this.enemyHealthIncrease) {
+    //   enemy.reset(enemySpawnPosition[0], enemySpawnPosition[1], this.health);
+    // }
+
+    // if the score is higher or same as needed to `level up` then update the enemy health with +1 and reset level to score +10
+    // if (score >= this.enemyHealthIncrease) {
+    //   this.health ++;
+    //   this.enemyHealthIncrease += ENEMY_HEALTH_INCREASE_AT_SCORE;
+    //   enemy.reset(enemySpawnPosition[0], enemySpawnPosition[1], this.health);
+    // }
+
+    // this.nextEnemyAt = this.game.time.now + this.enemyDelay;
+  }
+
+  getPosition() {
+    const w = this.world.bounds.width;
+    const h = this.world.bounds.height;
+    // array where zombies can spawn
+    const pos = [
+      [0, 0],
+      [0, h],
+      [w, 0],
+      [w, h],
+      [w / 2, 0],
+      [w / 2, h],
+      [w, h / 2]
+    ];
+
+    // take 1 array from pos array to use in reset
+    const randomPos = pos[Math.floor(Math.random() * 7)];
+
+    return randomPos;
+  }
+}
+
+
 class BootScene extends Phaser.Scene {
   constructor() {
     super({
