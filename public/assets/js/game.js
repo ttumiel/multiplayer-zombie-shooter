@@ -286,19 +286,23 @@ class WorldScene extends Phaser.Scene {
     this.cameras.main.roundPixels = true; // avoid tile bleed
   }
 
+  createBullets(){
+    this.bullets = new Bullets(this);
+
+    this.physics.add.collider(this.bullets, this.obstacles, (bullet)=>this.bullets.killAndHide(bullet))
+    this.physics.add.collider(this.bullets, this.enemies, (bullet,enemy)=>{
+      this.bullets.killAndHide(bullet);
+      this.enemies.killAndHide(enemy);
+    })
+  }
+
   createEnemies() {
-    // where the enemies will be
-    this.spawns = this.physics.add.group({
-      classType: Phaser.GameObjects.Zone
-    });
-    for (var i = 0; i < 30; i++) {
-      var x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
-      var y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
-      // parameters are x, y, width, height
-      this.spawns.create(x, y, 20, 20);
-    }
-    // add collider
-    // this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
+    /**
+     * TODO: Create Zombie object on server and receive here.
+     * When bullets collide with zombie, send to server that the zombie is dead.
+     */
+    this.enemies = new Zombies(this, 10);
+    this.physics.add.collider(this.enemies, this.obstacles);
   }
 
   onMeetEnemy(player, zone) {
@@ -327,6 +331,9 @@ class WorldScene extends Phaser.Scene {
 
   update() {
     if (this.container) {
+      this.enemies.enemyFollow(this.container);
+      this.bullets.outOfBounds();
+
       this.container.body.setVelocity(0);
 
       // Horizontal movement
