@@ -1,3 +1,28 @@
+class Bullets extends Phaser.Physics.Arcade.Group {
+  constructor(scene) {
+    super(scene.physics.world, scene, {
+      defaultKey: 'bullet',
+      maxSize: 100,
+      setXY: {
+        x: 22,
+        y: 50,
+      },
+      setScale: {
+        x: 0.5,
+        y: 0.5
+      },
+      immovable: true
+    });
+  }
+
+  outOfBounds(){
+    this.children.iterate((bullet=>{
+      if(bullet.x > this.world.bounds.width || bullet.x < 0 || bullet.y > this.world.bounds.height || bullet.y < 0){
+        this.killAndHide(bullet);
+      }
+    }))
+  }
+}
 class BootScene extends Phaser.Scene {
   constructor() {
     super({
