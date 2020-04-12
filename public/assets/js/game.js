@@ -140,8 +140,14 @@ class WorldScene extends Phaser.Scene {
   }
 
   create() {
+    this.speed = 80;
+    this.diagSpeed = Math.cos(45)*this.speed;
+    this.bulletSpeed = 130;
     this.socket = io();
-    this.otherPlayers = this.physics.add.group();
+    this.otherPlayers = this.physics.add.group({
+      immovable: true,
+      collideWorldBounds: true
+    });
 
     // create map
     this.createMap();
@@ -151,9 +157,18 @@ class WorldScene extends Phaser.Scene {
 
     // user input
     this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = {
+      up: this.input.keyboard.addKey('W'),
+      down: this.input.keyboard.addKey('S'),
+      left: this.input.keyboard.addKey('A'),
+      right: this.input.keyboard.addKey('D'),
+    };
 
     // create enemies
     this.createEnemies();
+
+    // Set up bullets group
+    this.createBullets();
 
     // listen for web socket events
     this.socket.on('currentPlayers', (players) => {
@@ -166,17 +181,17 @@ class WorldScene extends Phaser.Scene {
       });
     });
 
-    this.socket.on('newPlayer', function (playerInfo) {
+    this.socket.on('newPlayer', (playerInfo) => {
       this.addOtherPlayers(playerInfo);
-    }.bind(this));
+    });
 
-    this.socket.on('disconnect', function (playerId) {
-      this.otherPlayers.getChildren().forEach(function (player) {
+    this.socket.on('disconnect', (playerId) => {
+      this.otherPlayers.getChildren().forEach((player) => {
         if (playerId === player.playerId) {
           player.destroy();
         }
-      }.bind(this));
-    }.bind(this));
+      });
+    });
 
     this.socket.on('playerMoved', (playerInfo) => {
       this.otherPlayers.getChildren().forEach((player) => {
