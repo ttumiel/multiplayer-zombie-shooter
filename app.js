@@ -8,14 +8,46 @@ const server = require('http').Server(app);
 const io = require('socket.io').listen(server);
 
 const players = {};
+var enemies = [];
+let numPlayers = 0;
+
+const w = 480;
+const h = 480;
+const validEnemyStart = [
+  [0, 0],
+  [0, h],
+  [w, 0],
+  [w, h],
+  [w / 2, 0],
+  [w / 2, h],
+  [w, h / 2]
+];
+
+function getValidPosition(){
+  return validEnemyStart[Math.floor(Math.random()*validEnemyStart.length)];
+}
+
+function generateZombies(numEnemies){
+  // enemies = [];
+  const num = (numPlayers-1)*3;
+  for (let i=0;i<numEnemies;i++){
+    let [x,y] = getValidPosition();
+    enemies.push({
+      id: num + i,
+      x: x,
+      y: y
+    });
+  }
+}
 
 io.on('connection', function (socket) {
   console.log('a user connected: ', socket.id);
+  numPlayers += 1;
   // create a new player and add it to our players object
   players[socket.id] = {
     flipX: false,
-    x: Math.floor(Math.random() * 400) + 50,
-    y: Math.floor(Math.random() * 500) + 50,
+    x: Math.floor(Math.random() * w),
+    y: Math.floor(Math.random() * h),
     playerId: socket.id
   };
   // send the players object to the new player
@@ -23,10 +55,20 @@ io.on('connection', function (socket) {
   // update all other players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
+  // Check enemy list
+  // if (enemies.length === 0){
+  generateZombies(3);
+  // }
+
+  socket.broadcast.emit('enemies', enemies);
+
   // when a player disconnects, remove them from our players object
   socket.on('disconnect', function () {
     console.log('user disconnected: ', socket.id);
     delete players[socket.id];
+    numPlayers -= 1;
+    for(i=0;i<3;i++)
+      enemies.pop()
     // emit a message to all players to remove this player
     io.emit('disconnect', socket.id);
   });
@@ -45,6 +87,10 @@ io.on('connection', function (socket) {
     // emit a message to all players about the new bullet
     socket.broadcast.emit('bulletShot', {playerId: socket.id, bulletInfo: bulletInfo});
   });
+
+  socket.on('setup', ()=>{
+    socket.emit('enemies', enemies);
+  })
 });
 
 app.get('/game.html', function (req, res) {

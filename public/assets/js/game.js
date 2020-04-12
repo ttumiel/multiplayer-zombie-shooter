@@ -59,36 +59,16 @@ class Zombies extends Phaser.Physics.Arcade.Group {
     });
   }
 
-  enemySpawn(numEnemies) {
-    // if (this.nextEnemyAt > this.game.time.now) return;
-    // if (this.countDead() === 0) return;
-
-    const [x,y] = this.getPosition();
+  enemySpawn(x, y) {
+    // const [x,y] = this.getPosition();
     const enemy = this.get(x, y);
     if (!enemy) return;
-
-    // console.log(enemy)
 
     enemy
     .setActive(true)
     .setVisible(true)
     .setScale(0.1,0.1)
     .play('zombiewalk');
-
-    // reset enemies on x and y from pos array
-    // if the score is less than needed reset enemy at position with 1 health
-    // if (score <= this.enemyHealthIncrease) {
-    //   enemy.reset(enemySpawnPosition[0], enemySpawnPosition[1], this.health);
-    // }
-
-    // if the score is higher or same as needed to `level up` then update the enemy health with +1 and reset level to score +10
-    // if (score >= this.enemyHealthIncrease) {
-    //   this.health ++;
-    //   this.enemyHealthIncrease += ENEMY_HEALTH_INCREASE_AT_SCORE;
-    //   enemy.reset(enemySpawnPosition[0], enemySpawnPosition[1], this.health);
-    // }
-
-    // this.nextEnemyAt = this.game.time.now + this.enemyDelay;
   }
 
   getPosition() {
@@ -218,11 +198,19 @@ class WorldScene extends Phaser.Scene {
 
     this.socket.on('bulletShot', (bullet) => {
       if(this.bullets && bullet.playerId !== this.socket.id){
-        console.log(`Received bullet`)
-        console.log(bullet)
         this.bullets.addFromOtherPlayers(bullet.bulletInfo);
   }
     });
+
+    this.socket.on('enemies', (enemies) => {
+      enemies.forEach((enemy, i)=>{
+        if (i>=this.enemies.getLength()){
+          this.enemies.enemySpawn(enemy.x, enemy.y)
+  }
+      })
+    });
+
+    this.socket.emit('setup');
   }
 
   createMap() {
