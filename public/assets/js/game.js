@@ -22,7 +22,20 @@ class Bullets extends Phaser.Physics.Arcade.Group {
       }
     }))
   }
+
+  addFromOtherPlayers(bulletInfo){
+    let bullet = this.get(bulletInfo.x, bulletInfo.y);
+    if (!bullet) return;
+
+    bullet
+    .setActive(true)
+    .setVisible(true)
+    .setScale(0.5,0.5)
+    .setVelocityX(bulletInfo.velocity.x)
+    .setVelocityY(bulletInfo.velocity.y);
 }
+}
+
 class Zombies extends Phaser.Physics.Arcade.Group {
   constructor(scene, enemyCount) {
     super(scene.physics.world, scene, {
@@ -202,6 +215,14 @@ class WorldScene extends Phaser.Scene {
         }
       });
     });
+
+    this.socket.on('bulletShot', (bullet) => {
+      if(this.bullets && bullet.playerId !== this.socket.id){
+        console.log(`Received bullet`)
+        console.log(bullet)
+        this.bullets.addFromOtherPlayers(bullet.bulletInfo);
+  }
+    });
   }
 
   createMap() {
@@ -362,6 +383,12 @@ class WorldScene extends Phaser.Scene {
         bullet.rotation = this.physics.moveTo(bullet, 0, 0, this.bulletSpeed);
       break
     }
+
+    this.socket.emit('bulletShot', {
+      x: bullet.x,
+      y: bullet.y,
+      velocity: bullet.body.velocity,
+    });
   }
 
   update() {

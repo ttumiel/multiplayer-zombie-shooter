@@ -1,11 +1,6 @@
 // reads in our .env file and makes those values available as environment variables
 require('dotenv').config();
-
 const express = require('express');
-const bodyParser = require('body-parser');
-
-const routes = require('./routes/main');
-const secureRoutes = require('./routes/secure');
 
 // create an instance of an express app
 const app = express();
@@ -44,11 +39,13 @@ io.on('connection', function (socket) {
     // emit a message to all players about the player that moved
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
-});
 
-// update express settings
-app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-app.use(bodyParser.json()); // parse application/json
+  // When receiving bullet info, emit to all players
+  socket.on('bulletShot', function (bulletInfo) {
+    // emit a message to all players about the new bullet
+    socket.broadcast.emit('bulletShot', {playerId: socket.id, bulletInfo: bulletInfo});
+  });
+});
 
 app.get('/game.html', function (req, res) {
   res.sendFile(__dirname + '/public/game.html');
@@ -59,9 +56,6 @@ app.use(express.static(__dirname + '/public'));
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
-
-// main routes
-app.use('/', routes);
 
 // catch all other routes
 app.use((req, res, next) => {
