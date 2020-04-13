@@ -580,7 +580,7 @@ var config = {
       gravity: {
         y: 0
       },
-      debug: true // set to true to view zones
+      // debug: true // set to true to view zones
     }
   },
   scene: [
