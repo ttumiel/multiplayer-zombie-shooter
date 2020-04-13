@@ -8,7 +8,7 @@ const server = require('http').Server(app);
 const io = require('socket.io').listen(server);
 
 const players = {};
-var enemies = [];
+var allEnemies = [];
 let numPlayers = 0;
 
 const w = 480;
@@ -28,7 +28,7 @@ function getValidPosition(){
 }
 
 function generateZombies(numEnemies){
-  // enemies = [];
+  let enemies = [];
   const num = (numPlayers-1)*3;
   for (let i=0;i<numEnemies;i++){
     let [x,y] = getValidPosition();
@@ -38,6 +38,7 @@ function generateZombies(numEnemies){
       y: y
     });
   }
+  return enemies;
 }
 
 io.on('connection', function (socket) {
@@ -57,18 +58,18 @@ io.on('connection', function (socket) {
 
   // Check enemy list
   // if (enemies.length === 0){
-  generateZombies(3);
+  let newEnemies = generateZombies(3);
   // }
 
-  socket.broadcast.emit('enemies', enemies);
+  socket.broadcast.emit('enemies', newEnemies);
 
   // when a player disconnects, remove them from our players object
   socket.on('disconnect', function () {
     console.log('user disconnected: ', socket.id);
     delete players[socket.id];
     numPlayers -= 1;
-    for(i=0;i<3;i++)
-      enemies.pop()
+    // for(i=0;i<3;i++)
+    //   enemies.pop()
     // emit a message to all players to remove this player
     io.emit('disconnect', socket.id);
   });
@@ -88,9 +89,19 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('bulletShot', {playerId: socket.id, bulletInfo: bulletInfo});
   });
 
+  // When an enemy dies, spawn another 2
+  socket.on('enemyKilled', ()=>{
+    console.log("enemykilled");
+    let numz = 1 + Math.round(Math.random());
+    let newz = generateZombies(numz);
+    socket.broadcast.emit('enemies', newz);
+    socket.emit('enemies', newz);
+  });
+
+  // When the client is set up, send them all the current enemies
   socket.on('setup', ()=>{
-    socket.emit('enemies', enemies);
-  })
+    socket.emit('enemies', newEnemies);
+  });
 });
 
 app.get('/game.html', function (req, res) {

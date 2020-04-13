@@ -203,10 +203,11 @@ class WorldScene extends Phaser.Scene {
     });
 
     this.socket.on('enemies', (enemies) => {
+      console.log(enemies.length, "new enemies spawned");
       enemies.forEach((enemy, i)=>{
-        if (i>=this.enemies.getLength()){
-          this.enemies.enemySpawn(enemy.x, enemy.y)
-  }
+        // if (i>=this.enemies.getLength()){
+        this.enemies.enemySpawn(enemy.x, enemy.y);
+        // }
       })
     });
 
@@ -319,11 +320,16 @@ class WorldScene extends Phaser.Scene {
 
   createBullets(){
     this.bullets = new Bullets(this);
+    this.nextShotAt = 0;
 
     this.physics.add.collider(this.bullets, this.obstacles, (bullet)=>this.bullets.killAndHide(bullet))
     this.physics.add.collider(this.bullets, this.enemies, (bullet,enemy)=>{
-      this.bullets.killAndHide(bullet);
+      if(bullet.active && enemy.active){
       this.enemies.killAndHide(enemy);
+        this.bullets.killAndHide(bullet);
+        this.socket.emit('enemyKilled');
+        this.killedEnemies++;
+      }
     })
   }
 
