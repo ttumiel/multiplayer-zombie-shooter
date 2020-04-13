@@ -145,6 +145,33 @@ class WorldScene extends Phaser.Scene {
     // create map
     this.createMap();
 
+    // Add text info
+    this.captionTextFormat = (
+        '# Enemies:  %1\n' +
+        '# Killed:   %2\n' +
+        '# Players:  %3\n' +
+        'Highscore:  %4'
+    );
+
+    this.info = this.add.text(16, 16, '', {
+      fill: '#7fdbff',
+      fontFamily: 'monospace',
+      lineSpacing: 4,
+      // fontSize: 8
+    });
+    this.info.setScale(0.75);
+    // this.info.setDisplaySize(100,100);
+    // this.info.setSize(100,100);
+
+    this.gameoverText = this.add.text(16, 16, 'GAME OVER', {
+      fill: '#800000',
+      fontFamily: 'monospace',
+      lineSpacing: 4,
+      fontSize: 32
+    });
+    this.gameoverText.setVisible(false);
+
+
     // create player animations
     this.createAnimations();
 
@@ -471,6 +498,27 @@ class WorldScene extends Phaser.Scene {
         flipX: this.player.flipX
       });
     }
+
+      // console.log(this.info);
+      // console.log(this.info.x)=
+      // this.info.setDisplayOrigin(this.container.x, this.container.y);
+      this.info.x = Math.max(this.container.x-140,16);
+      this.info.y = Math.max(this.container.y-100,16);
+      this.highscore = Math.max(this.highscore, this.killedEnemies);
+      this.info.setText(Phaser.Utils.String.Format(this.captionTextFormat, [
+        this.enemies.countActive(),
+        this.killedEnemies,
+        this.otherPlayers.countActive(),
+        this.highscore
+      ]));
+
+      if (this.isGameover){
+        this.gameoverText.x = this.container.x-this.gameoverText.width/2;
+        this.gameoverText.y = this.container.y-this.gameoverText.height/2;
+        this.gameoverText.setVisible(true);
+      } else{
+        this.gameoverText.setVisible(false);
+      }
   }
 }
 }
