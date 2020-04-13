@@ -178,9 +178,6 @@ class WorldScene extends Phaser.Scene {
       right: this.input.keyboard.addKey('D'),
     };
 
-    // Set up bullets group
-    this.createBullets();
-
     // listen for web socket events
     this.socket.on('currentPlayers', (players) => {
       Object.keys(players).forEach((id) => {
@@ -189,6 +186,9 @@ class WorldScene extends Phaser.Scene {
 
           // create enemies
           this.createEnemies();
+
+          // Set up bullets group
+          this.createBullets();
         } else {
           this.addOtherPlayers(players[id]);
         }
