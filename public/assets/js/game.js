@@ -1,3 +1,5 @@
+let SHOT_DELAY = 500;
+
 class Bullets extends Phaser.Physics.Arcade.Group {
   constructor(scene) {
     super(scene.physics.world, scene, {
@@ -8,11 +10,13 @@ class Bullets extends Phaser.Physics.Arcade.Group {
         y: 50,
       },
       setScale: {
-        x: 0.5,
-        y: 0.5
+        x: 0.1,
+        y: 0.1
       },
       immovable: true
     });
+    this.scale_x = 0.1;
+    this.scale_y = 0.1
   }
 
   outOfBounds(){
@@ -30,16 +34,17 @@ class Bullets extends Phaser.Physics.Arcade.Group {
     bullet
     .setActive(true)
     .setVisible(true)
-    .setScale(0.5,0.5)
+    .setScale(this.scale_x, this.scale_y)
     .setVelocityX(bulletInfo.velocity.x)
     .setVelocityY(bulletInfo.velocity.y);
+  }
 }
-}
+
 
 class Zombies extends Phaser.Physics.Arcade.Group {
   constructor(scene, enemyCount) {
     super(scene.physics.world, scene, {
-      maxSize: enemyCount,
+      maxSize: 100,
       defaultKey: `enemy`,
       immovable: true,
       setScale: {
@@ -67,28 +72,14 @@ class Zombies extends Phaser.Physics.Arcade.Group {
     enemy
     .setActive(true)
     .setVisible(true)
-    .setScale(0.1,0.1)
+    // .setScale(0.1,0.1)
+    .setSize(150,150)
+    .setDisplaySize(24,24)
     .play('zombiewalk');
   }
 
-  getPosition() {
-    const w = this.world.bounds.width;
-    const h = this.world.bounds.height;
-    // array where zombies can spawn
-    const pos = [
-      [0, 0],
-      [0, h],
-      [w, 0],
-      [w, h],
-      [w / 2, 0],
-      [w / 2, h],
-      [w, h / 2]
-    ];
-
-    // take 1 array from pos array to use in reset
-    const randomPos = pos[Math.floor(Math.random() * 7)];
-
-    return randomPos;
+  killAll() {
+    this.children.iterate((enemy=>this.killAndHide(enemy)));
   }
 }
 
@@ -117,7 +108,7 @@ class BootScene extends Phaser.Scene {
       frameHeight: 311
     });
     // Bullet image
-    this.load.image(`bullet`, `assets/images/bullet.png`);
+    this.load.image(`bullet`, `assets/images/ball.png`);
   }
 
   create() {
@@ -134,8 +125,11 @@ class WorldScene extends Phaser.Scene {
 
   create() {
     this.speed = 80;
-    this.diagSpeed = Math.cos(45)*this.speed;
+    this.diagSpeed = Math.cos(Math.PI/4)*this.speed;
     this.bulletSpeed = 130;
+    this.killedEnemies = 0;
+    this.isGameover = false;
+    this.highscore = 0;
     this.socket = io();
     this.otherPlayers = this.physics.add.group({
       immovable: true,
@@ -184,9 +178,6 @@ class WorldScene extends Phaser.Scene {
       right: this.input.keyboard.addKey('D'),
     };
 
-    // create enemies
-    this.createEnemies();
-
     // Set up bullets group
     this.createBullets();
 
@@ -195,6 +186,9 @@ class WorldScene extends Phaser.Scene {
       Object.keys(players).forEach((id) => {
         if (players[id].playerId === this.socket.id) {
           this.createPlayer(players[id]);
+
+          // create enemies
+          this.createEnemies();
         } else {
           this.addOtherPlayers(players[id]);
         }
@@ -226,7 +220,7 @@ class WorldScene extends Phaser.Scene {
     this.socket.on('bulletShot', (bullet) => {
       if(this.bullets && bullet.playerId !== this.socket.id){
         this.bullets.addFromOtherPlayers(bullet.bulletInfo);
-  }
+      }
     });
 
     this.socket.on('enemies', (enemies) => {
@@ -320,6 +314,7 @@ class WorldScene extends Phaser.Scene {
     this.container.setSize(16, 16);
     this.physics.world.enable(this.container);
     this.container.add(this.player);
+    this.container.body.immovable = true;
 
     // update camera
     this.updateCamera();
@@ -339,6 +334,9 @@ class WorldScene extends Phaser.Scene {
     // don't walk on trees
     this.physics.add.collider(this.container, this.obstacles);
 
+    // don't walk over other players
+    this.physics.add.collider(this.container, this.otherPlayers);
+
     // limit camera to map
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
     this.cameras.main.startFollow(this.container);
@@ -352,7 +350,7 @@ class WorldScene extends Phaser.Scene {
     this.physics.add.collider(this.bullets, this.obstacles, (bullet)=>this.bullets.killAndHide(bullet))
     this.physics.add.collider(this.bullets, this.enemies, (bullet,enemy)=>{
       if(bullet.active && enemy.active){
-      this.enemies.killAndHide(enemy);
+        this.enemies.killAndHide(enemy);
         this.bullets.killAndHide(bullet);
         this.socket.emit('enemyKilled');
         this.killedEnemies++;
@@ -367,41 +365,85 @@ class WorldScene extends Phaser.Scene {
      */
     this.enemies = new Zombies(this, 10);
     this.physics.add.collider(this.enemies, this.obstacles);
+    this.physics.add.collider(this.enemies, this.container, (enemy, player)=>{
+      if(enemy.active && !this.isGameover){
+        console.log("Player DEAD!");
+        this.isGameover = true;
+        this.killedEnemies = 0;
+        // if (this.resetEvent === undefined){
+        //   this.resetEvent = this.time.addEvent({
+        //     delay: 3000,
+        //     callback: ()=>{
+        //       this.enemies.killAll();
+        //       this.socket.emit('setup');
+        //       this.isGameover = false;
+        //       this.resetEvent.remove(false);
+        //       console.log(this.resetEvent);
+        //       // this.resetEvent == undefined;
+        //     },
+        //     callbackScope: this
+        //   });
+        // }
+        // setTimeout(()=>{
+          // this.enemies.killAll();
+          // this.socket.emit('setup');
+          // this.isGameover = false;
+        // }, 5000);
+      }
+      return true;
+    });
+    // this.physics.add.collider(this.enemies, this.enemies); // Not sure how to make the enemies split from overlapping
   }
 
   shoot(x, y, direction){
+    if (this.nextShotAt > this.time.now) return;
+    this.nextShotAt = this.time.now + SHOT_DELAY;
+
     let bullet = this.bullets.get(x,y);
     if (!bullet) return;
 
     bullet
     .setActive(true)
     .setVisible(true)
-    .setScale(0.5,0.5);
+    .setScale(this.bullets.scale_x,this.bullets.scale_y)
+    .setVelocity(0);
 
     switch(direction){
       case 0:
-        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, 0, this.bulletSpeed);
+        bullet.setVelocityY(-this.bulletSpeed);
+        bullet.rotation = -Math.PI/2
       break
       case 1:
-        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, 0, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, 0, this.bulletSpeed);
+        bullet.setVelocityX(this.bulletSpeed);
+        bullet.setVelocityY(-this.bulletSpeed);
       break
       case 2:
-        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height/2, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height/2, this.bulletSpeed);
+        bullet.setVelocityX(this.bulletSpeed);
       break
       case 3:
-        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height, this.bulletSpeed);
+        bullet.setVelocityX(this.bulletSpeed);
+        bullet.setVelocityY(this.bulletSpeed);
       break
       case 4:
-        bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, this.physics.world.bounds.height, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, this.physics.world.bounds.height, this.bulletSpeed);
+        bullet.setVelocityY(this.bulletSpeed);
       break
       case 5:
-        bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height, this.bulletSpeed);
+        bullet.setVelocityY(this.bulletSpeed);
+        bullet.setVelocityX(-this.bulletSpeed);
       break
       case 6:
-        bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height/2, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height/2, this.bulletSpeed);
+        bullet.setVelocityX(-this.bulletSpeed);
       break
       case 7:
-        bullet.rotation = this.physics.moveTo(bullet, 0, 0, this.bulletSpeed);
+        // bullet.rotation = this.physics.moveTo(bullet, 0, 0, this.bulletSpeed);
+        bullet.setVelocityX(-this.bulletSpeed);
+        bullet.setVelocityY(-this.bulletSpeed);
       break
     }
 
@@ -418,40 +460,42 @@ class WorldScene extends Phaser.Scene {
       this.bullets.outOfBounds();
 
       this.container.body.setVelocity(0);
-      if(this.wasd.left.isDown){
-        this.player.anims.play('left', true);
-        this.player.flipX = true;
-        if(this.wasd.up.isDown){
-          this.container.body.setVelocityX(-this.speed);
-          this.container.body.setVelocityY(-this.speed);
-        }else if(this.wasd.down.isDown){
-          this.container.body.setVelocityX(-this.speed);
-          this.container.body.setVelocityY(this.speed);
+      if(!this.isGameover){
+        if(this.wasd.left.isDown){
+          this.player.anims.play('left', true);
+          this.player.flipX = true;
+          if(this.wasd.up.isDown){
+            this.container.body.setVelocityX(-this.diagSpeed);
+            this.container.body.setVelocityY(-this.diagSpeed);
+          }else if(this.wasd.down.isDown){
+            this.container.body.setVelocityX(-this.diagSpeed);
+            this.container.body.setVelocityY(this.diagSpeed);
+          }else{
+            this.container.body.setVelocityX(-this.speed);
+          }
+        }else if(this.wasd.right.isDown){
+          this.player.anims.play('right', true);
+          this.player.flipX = false;
+          if(this.wasd.up.isDown){
+            this.container.body.setVelocityX(this.diagSpeed);
+            this.container.body.setVelocityY(-this.diagSpeed);
+          }else if(this.wasd.down.isDown){
+            this.container.body.setVelocityX(this.diagSpeed);
+            this.container.body.setVelocityY(this.diagSpeed);
+          }else{
+            this.container.body.setVelocityX(this.speed);
+          }
         }else{
-          this.container.body.setVelocityX(-this.speed);
+          if(this.wasd.up.isDown){
+            this.player.anims.play('up', true);
+            this.container.body.setVelocityY(-this.speed);
+          }else if(this.wasd.down.isDown){
+            this.player.anims.play('down', true);
+            this.container.body.setVelocityY(this.speed);
+          }else{
+            this.player.anims.stop();
+          }
         }
-      }else if(this.wasd.right.isDown){
-        this.player.anims.play('right', true);
-        this.player.flipX = false;
-        if(this.wasd.up.isDown){
-          this.container.body.setVelocityX(this.speed);
-          this.container.body.setVelocityY(-this.speed);
-        }else if(this.wasd.down.isDown){
-          this.container.body.setVelocityX(this.speed);
-          this.container.body.setVelocityY(this.speed);
-        }else{
-          this.container.body.setVelocityX(this.speed);
-        }
-      }else{
-        if(this.wasd.up.isDown){
-        this.player.anims.play('up', true);
-          this.container.body.setVelocityY(-this.speed);
-        }else if(this.wasd.down.isDown){
-        this.player.anims.play('down', true);
-          this.container.body.setVelocityY(this.speed);
-        }else{
-        this.player.anims.stop();
-      }
       }
 
       if(this.cursors.left.isDown){
@@ -492,12 +536,12 @@ class WorldScene extends Phaser.Scene {
           this.wasd.right.isDown ||
           this.wasd.up.isDown    ||
           this.wasd.down.isDown){
-      this.socket.emit('playerMovement', {
-        x: this.container.x,
-        y: this.container.y,
-        flipX: this.player.flipX
-      });
-    }
+        this.socket.emit('playerMovement', {
+          x: this.container.x,
+          y: this.container.y,
+          flipX: this.player.flipX
+        });
+      }
 
       // console.log(this.info);
       // console.log(this.info.x)=
@@ -519,8 +563,8 @@ class WorldScene extends Phaser.Scene {
       } else{
         this.gameoverText.setVisible(false);
       }
+    }
   }
-}
 }
 
 var config = {
