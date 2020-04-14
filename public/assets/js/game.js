@@ -73,7 +73,7 @@ class Zombies extends Phaser.Physics.Arcade.Group {
     .setActive(true)
     .setVisible(true)
     // .setScale(0.1,0.1)
-    .setSize(150,150)
+    .setSize(60,60)
     .setDisplaySize(24,24)
     .play('zombiewalk');
   }
@@ -104,8 +104,8 @@ class BootScene extends Phaser.Scene {
     });
     // Load zombie
     this.load.spritesheet(`enemy`, `assets/images/zombie_move.png`, {
-      frameWidth: 288,
-      frameHeight: 311
+      frameWidth: 92,
+      frameHeight: 100
     });
     // Bullet image
     this.load.image(`bullet`, `assets/images/ball.png`);
