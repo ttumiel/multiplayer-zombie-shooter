@@ -574,8 +574,8 @@ class WorldScene extends Phaser.Scene {
         });
       }
 
-      this.info.x = Math.max(this.container.x-140,16);
-      this.info.y = Math.max(this.container.y-100,16);
+      this.info.x = Math.min(Math.max(this.container.x-160+16,16), this.physics.world.bounds.width-320+16);
+      this.info.y = Math.min(Math.max(this.container.y-120+16,16), this.physics.world.bounds.width-240+16);;
       this.highscore = Math.max(this.highscore, this.killedEnemies);
       this.info.setText(Phaser.Utils.String.Format(this.captionTextFormat, [
         this.enemies.countActive(),
