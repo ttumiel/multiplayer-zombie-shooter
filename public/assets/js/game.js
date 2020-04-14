@@ -109,6 +109,8 @@ class BootScene extends Phaser.Scene {
     });
     // Bullet image
     this.load.image(`bullet`, `assets/images/ball.png`);
+    // Text
+    this.load.bitmapFont('arcade', 'assets/arcade.png', 'assets/arcade.xml');
   }
 
   create() {
@@ -141,39 +143,20 @@ class WorldScene extends Phaser.Scene {
 
     // Add text info
     this.captionTextFormat = (
-        '# Enemies:  %1\n' +
-        '# Killed:   %2\n' +
-        '# Players:  %3\n' +
-        'Highscore:  %4'
+        'Enemies:   %1\n' +
+        'Killed:    %2\n' +
+        'Players:   %3\n' +
+        'Highscore: %4'
     );
 
-    this.info = this.add.text(16, 16, '', {
-      fill: '#7fdbff',
-      fontFamily: 'monospace',
-      lineSpacing: 4,
-      // fontSize: 8
-    });
-    this.info.setScale(0.75);
-    // this.info.setDisplaySize(100,100);
-    // this.info.setSize(100,100);
+    this.info = this.add.bitmapText(16, 16, 'arcade', '', 8);
 
-    this.gameoverText = this.add.text(16, 16, 'GAME OVER', {
-      fill: '#800000',
-      fontFamily: 'monospace',
-      lineSpacing: 4,
-      fontSize: 32
-    });
+    this.gameoverText = this.add.bitmapText(16, 16, 'arcade', 'GAME OVER', 22).setTint('#800000');
     this.gameoverText.setVisible(false);
 
     this.countdownValue = 3;
-    this.countdownText = this.add.text(16, 16, '', {
-      fill: '#800000',
-      fontFamily: 'monospace',
-      lineSpacing: 4,
-      fontSize: 32
-    });
+    this.countdownText = this.add.bitmapText(16, 16, 'arcade', 'GAME OVER', 22).setTint('#800000');
     this.countdownText.setVisible(false);
-
 
     // create player animations
     this.createAnimations();
