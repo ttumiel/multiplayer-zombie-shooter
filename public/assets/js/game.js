@@ -423,6 +423,7 @@ class WorldScene extends Phaser.Scene {
             this.resetEvent.remove(false);
             this.countdownToRestart.remove(false);
             this.countdownValue = 3;
+            this.killedEnemies = 0;
           },
           callbackScope: this
         });
