@@ -165,6 +165,15 @@ class WorldScene extends Phaser.Scene {
     });
     this.gameoverText.setVisible(false);
 
+    this.countdownValue = 3;
+    this.countdownText = this.add.text(16, 16, '', {
+      fill: '#800000',
+      fontFamily: 'monospace',
+      lineSpacing: 4,
+      fontSize: 32
+    });
+    this.countdownText.setVisible(false);
+
 
     // create player animations
     this.createAnimations();
@@ -359,36 +368,36 @@ class WorldScene extends Phaser.Scene {
   }
 
   createEnemies() {
-    /**
-     * TODO: Create Zombie object on server and receive here.
-     * When bullets collide with zombie, send to server that the zombie is dead.
-     */
     this.enemies = new Zombies(this, 10);
     this.physics.add.collider(this.enemies, this.obstacles);
     this.physics.add.collider(this.enemies, this.container, (enemy, player)=>{
-      if(enemy.active && !this.isGameover){
+      if(enemy.active && !this.isGameover && player.active){
         console.log("Player DEAD!");
         this.isGameover = true;
         this.killedEnemies = 0;
-        // if (this.resetEvent === undefined){
-        //   this.resetEvent = this.time.addEvent({
-        //     delay: 3000,
-        //     callback: ()=>{
-        //       this.enemies.killAll();
-        //       this.socket.emit('setup');
-        //       this.isGameover = false;
-        //       this.resetEvent.remove(false);
-        //       console.log(this.resetEvent);
-        //       // this.resetEvent == undefined;
-        //     },
-        //     callbackScope: this
-        //   });
-        // }
-        // setTimeout(()=>{
-          // this.enemies.killAll();
-          // this.socket.emit('setup');
-          // this.isGameover = false;
-        // }, 5000);
+        this.countdownToRestart = this.time.addEvent({
+          delay: 1000,
+          callback: ()=>{
+            this.countdownText.setText(this.countdownValue);
+            this.countdownValue--;
+            this.countdownText.setVisible(true);
+          },
+          loop: true,
+          callbackScope: this
+        });
+        this.resetEvent = this.time.addEvent({
+          delay: 4000,
+          callback: ()=>{
+            this.enemies.killAll();
+            this.socket.emit('setup');
+            this.isGameover = false;
+            this.resetEvent.remove(false);
+            this.countdownToRestart.remove(false);
+            this.countdownValue = 3;
+          },
+          callbackScope: this
+        });
+
       }
       return true;
     });
@@ -414,34 +423,27 @@ class WorldScene extends Phaser.Scene {
         bullet.rotation = -Math.PI/2
       break
       case 1:
-        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, 0, this.bulletSpeed);
         bullet.setVelocityX(this.bulletSpeed);
         bullet.setVelocityY(-this.bulletSpeed);
       break
       case 2:
-        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height/2, this.bulletSpeed);
         bullet.setVelocityX(this.bulletSpeed);
       break
       case 3:
-        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width, this.physics.world.bounds.height, this.bulletSpeed);
         bullet.setVelocityX(this.bulletSpeed);
         bullet.setVelocityY(this.bulletSpeed);
       break
       case 4:
-        // bullet.rotation = this.physics.moveTo(bullet, this.physics.world.bounds.width/2, this.physics.world.bounds.height, this.bulletSpeed);
         bullet.setVelocityY(this.bulletSpeed);
       break
       case 5:
-        // bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height, this.bulletSpeed);
         bullet.setVelocityY(this.bulletSpeed);
         bullet.setVelocityX(-this.bulletSpeed);
       break
       case 6:
-        // bullet.rotation = this.physics.moveTo(bullet, 0, this.physics.world.bounds.height/2, this.bulletSpeed);
         bullet.setVelocityX(-this.bulletSpeed);
       break
       case 7:
-        // bullet.rotation = this.physics.moveTo(bullet, 0, 0, this.bulletSpeed);
         bullet.setVelocityX(-this.bulletSpeed);
         bullet.setVelocityY(-this.bulletSpeed);
       break
@@ -560,8 +562,14 @@ class WorldScene extends Phaser.Scene {
         this.gameoverText.x = this.container.x-this.gameoverText.width/2;
         this.gameoverText.y = this.container.y-this.gameoverText.height/2;
         this.gameoverText.setVisible(true);
+
+        this.countdownText.x = this.container.x-this.countdownText.width/2;
+        this.countdownText.y = this.container.y+this.gameoverText.height/2+20;
+        this.countdownText.setVisible(true);
       } else{
         this.gameoverText.setVisible(false);
+        this.countdownText.setVisible(false);
+        this.countdownText.setText("");
       }
     }
   }
@@ -580,7 +588,7 @@ var config = {
       gravity: {
         y: 0
       },
-      // debug: true // set to true to view zones
+      debug: true // set to true to view zones
     }
   },
   scene: [
