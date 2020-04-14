@@ -219,6 +219,15 @@ class WorldScene extends Phaser.Scene {
     this.socket.on('playerMoved', (playerInfo) => {
       this.otherPlayers.getChildren().forEach((player) => {
         if (playerInfo.playerId === player.playerId) {
+          if(playerInfo.x>player.x){
+            player.anims.play('otherPlayerRight', true);
+          }else if(playerInfo.x<player.x){
+            player.anims.play('otherPlayerLeft', true);
+          }else if (playerInfo.y<player.y){
+            player.anims.play('otherPlayerUp', true);
+          }else if (playerInfo.y>player.y){
+            player.anims.play('otherPlayerDown', true);
+          }
           player.x=playerInfo.x;
           player.y=playerInfo.y;
           player.flipX = playerInfo.flipX;
@@ -305,6 +314,43 @@ class WorldScene extends Phaser.Scene {
     });
 
     this.anims.create({
+      key: 'otherPlayerLeft',
+      frames: this.anims.generateFrameNumbers('player', {
+        frames: [1, 7, 1, 13]
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    // animation with key 'right'
+    this.anims.create({
+      key: 'otherPlayerRight',
+      frames: this.anims.generateFrameNumbers('player', {
+        frames: [1, 7, 1, 13]
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'otherPlayerUp',
+      frames: this.anims.generateFrameNumbers('player', {
+        frames: [2, 8, 2, 14]
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'otherPlayerDown',
+      frames: this.anims.generateFrameNumbers('player', {
+        frames: [0, 6, 0, 12]
+      }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
       key: 'zombiewalk',
       frames: this.anims.generateFrameNumbers('enemy', {
         start: 0,
@@ -334,7 +380,7 @@ class WorldScene extends Phaser.Scene {
 
   addOtherPlayers(playerInfo) {
     const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'player', 6);
-    otherPlayer.setTint(Math.random() * 0x0f0f0f);
+    // otherPlayer.setTint(Math.random() * 0x0f0f0f);
     otherPlayer.playerId = playerInfo.playerId;
     this.otherPlayers.add(otherPlayer);
   }
@@ -545,16 +591,13 @@ class WorldScene extends Phaser.Scene {
         });
       }
 
-      // console.log(this.info);
-      // console.log(this.info.x)=
-      // this.info.setDisplayOrigin(this.container.x, this.container.y);
       this.info.x = Math.max(this.container.x-140,16);
       this.info.y = Math.max(this.container.y-100,16);
       this.highscore = Math.max(this.highscore, this.killedEnemies);
       this.info.setText(Phaser.Utils.String.Format(this.captionTextFormat, [
         this.enemies.countActive(),
         this.killedEnemies,
-        this.otherPlayers.countActive(),
+        this.otherPlayers.countActive()+1,
         this.highscore
       ]));
 
