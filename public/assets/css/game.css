@@ -1,0 +1,37 @@
+ul {
+  list-style: none;
+  word-wrap: break-word;
+}
+
+#chatContainer {
+  width: calc(100% - 960px);
+}
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: stretch;
+}
+
+.flex-container > div {
+  background-color: #f1f1f1;
+}
+
+/* Fix user-agent */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  display: -ms-flexbox;
+  display: -webkit-box;
+  display: flex;
+  -ms-flex-align: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  background-color: green;
+}
