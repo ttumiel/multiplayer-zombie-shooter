@@ -47,8 +47,8 @@ io.on('connection', function (socket) {
   // create a new player and add it to our players object
   players[socket.id] = {
     flipX: false,
-    x: Math.floor(Math.random() * w),
-    y: Math.floor(Math.random() * h),
+    x: Math.floor(Math.random() * w-100)+50,
+    y: Math.floor(Math.random() * h-80)+40,
     playerId: socket.id
   };
   // send the players object to the new player
@@ -56,12 +56,9 @@ io.on('connection', function (socket) {
   // update all other players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
-  // Check enemy list
-  // if (enemies.length === 0){
-  let newEnemies = generateZombies(3);
-  // }
-
-  socket.broadcast.emit('enemies', newEnemies);
+  // Add an extra zombie for every new player
+  // let newEnemies = generateZombies(1);
+  // socket.broadcast.emit('enemies', newEnemies);
 
   // when a player disconnects, remove them from our players object
   socket.on('disconnect', function () {
@@ -94,12 +91,13 @@ io.on('connection', function (socket) {
     console.log("enemykilled");
     let numz = 1 + Math.round(Math.random());
     let newz = generateZombies(numz);
-    socket.broadcast.emit('enemies', newz);
+    // socket.broadcast.emit('enemies', newz);
     socket.emit('enemies', newz);
   });
 
   // When the client is set up, send them all the current enemies
   socket.on('setup', ()=>{
+    let newEnemies = generateZombies(3);
     socket.emit('enemies', newEnemies);
   });
 });
